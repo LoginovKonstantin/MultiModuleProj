@@ -22,7 +22,7 @@ class Login : ComponentSpec<Unit, InputState>() {
                 defaultValue = state.email
             }){}
             input ({
-                text(state.pass)
+                type = "password"
                 className = "form-control"
                 placeholder = "Password"
                 onChange = {state.pass = it.currentTarget.value}
@@ -48,6 +48,17 @@ class Login : ComponentSpec<Unit, InputState>() {
     }
 
     private fun logIn() {
+        val req = XMLHttpRequest()
+        req.open("GET", "http://localhost:8080/login/${state.email}/${state.pass}")
+        req.onload = {
+            if(req.responseText.equals("\"loginFail\"")){
+                state = InputState("", "", "Пользователя не существует")
+            }else {
+                state = InputState("", "", req.responseText)
+            }
+            console.log(req.responseText)
+        }
+        req.send()
         console.log("Вход")
     }
 

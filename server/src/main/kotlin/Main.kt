@@ -14,28 +14,41 @@ import java.text.SimpleDateFormat
 import kotlin.reflect.KClass
 
 object Vertx3KotlinRestJdbcTutorial2 {
+
     val gson = Gson()
+    val clientAddress = "http://localhost:63342"
 
     @JvmStatic fun main(args: Array<String>) {
+
         val jedis: Jedis = Jedis("localhost", 6379)
-        jedis.set("foo", "bar");
-        println(jedis.get("foo"))
-        jedis.del("foo")
         val port = 8080
         val vertx = Vertx.vertx()
         val server = vertx.createHttpServer()
         val router = Router.router(vertx)
 
-        val userService = MemoryUserService()
         val responseService = ResponseService()
 
-        router.get("/:login").handler { ctx ->
-            router.route().handler(CorsHandler.create("http://localhost:63342").allowedMethod(HttpMethod.GET))
-            val login = ctx.request().getParam("login")
-            jsonResponse(ctx, userService.getUser(login))
+        //при входе(авторизации)
+        router.get("/:login/:email/:pass").handler { ctx ->
+            //для кроссдоменного запроса
+            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
+            val email = ctx.request().getParam("email")
+            if(jedis.hexists(email, "password")){
+                val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
+                jedis.hset(email, "countInput", newCountInput.toString())
+                jsonResponse(ctx, responseService.getUser(email,
+                        jedis.hget(email, "password"),
+                        jedis.hget(email, "date"),
+                        jedis.hget(email, "ip"),
+                        jedis.hget(email, "countInput")))
+            }else{
+                jsonResponse(ctx, responseService.loginFail());
+            }
         }
+
+        //при регистрации
         router.get("/:registration/:email/:pass").handler { ctx ->
-            router.route().handler(CorsHandler.create("http://localhost:63342").allowedMethod(HttpMethod.GET))
+            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
             val date = SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis())
@@ -50,16 +63,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
                 jedis.hset(email, "countInput", 0.toString())
                 jsonResponse(ctx, responseService.registrationSuccess());
             }
-        }
-
-        router.post("/").handler { ctx ->
-            val user = jsonRequest<User>(ctx, User::class)
-            jsonResponse(ctx, userService.addUser(user))
-        }
-
-        router.delete("/:userId").handler { ctx ->
-            val userId = ctx.request().getParam("userId")
-            jsonResponse(ctx, userService.remUser(userId))
         }
 
         server.requestHandler { router.accept(it) }.listen(port) {
