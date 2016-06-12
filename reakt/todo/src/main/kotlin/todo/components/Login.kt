@@ -1,5 +1,8 @@
 import com.github.andrewoma.react.*
 import org.w3c.xhr.XMLHttpRequest
+import todo.components.UserProps
+import todo.components.createPersonalArea
+import kotlin.browser.document
 
 data class InputState(var email: String, var pass: String, var message: String)
 
@@ -38,7 +41,7 @@ class Login : ComponentSpec<Unit, InputState>() {
             div ({className = "divWithBtn"}) {
                 button ({
                     className = "btn btn-success"
-                    onClick = { if(validInputs()) registration() }
+                    onClick = { if(validInputs()) registration()  }
                 })
                 { text("Регистрация") }
                 br { }
@@ -55,11 +58,19 @@ class Login : ComponentSpec<Unit, InputState>() {
                 state = InputState("", "", "Пользователя не существует")
             }else {
                 state = InputState("", "", req.responseText)
+                var user = req.responseText.replace("\"","")
+                var userPropertiesList: List<String> = user.split(",")
+                react.render(createPersonalArea(UserProps(
+                        userPropertiesList[0],//email
+                        userPropertiesList[1],//password
+                        userPropertiesList[2],//date
+                        userPropertiesList[3],//ip
+                        userPropertiesList[4]//countInput
+                )), document.getElementById("app")!!)
             }
             console.log(req.responseText)
         }
         req.send()
-        console.log("Вход")
     }
 
     private fun registration(){
