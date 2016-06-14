@@ -11,55 +11,82 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.CorsHandler
 import redis.clients.jedis.Jedis
 import java.text.SimpleDateFormat
+import java.util.*
+import java.util.function.Predicate
 import kotlin.reflect.KClass
 
 object Vertx3KotlinRestJdbcTutorial2 {
+
     val gson = Gson()
+    val clientAddress = "http://localhost:63342"
 
     @JvmStatic fun main(args: Array<String>) {
+
         val jedis: Jedis = Jedis("localhost", 6379)
-        jedis.set("foo", "bar");
-        println(jedis.get("foo"))
-        jedis.del("foo")
         val port = 8080
         val vertx = Vertx.vertx()
         val server = vertx.createHttpServer()
         val router = Router.router(vertx)
 
-        val userService = MemoryUserService()
         val responseService = ResponseService()
 
-        router.get("/:login").handler { ctx ->
-            router.route().handler(CorsHandler.create("http://localhost:63342").allowedMethod(HttpMethod.GET))
-            val login = ctx.request().getParam("login")
-            jsonResponse(ctx, userService.getUser(login))
+        //пользователи онлайн
+        var usersOnline: ArrayList<User> = arrayListOf()
+        //созданые чаты
+//        var chats: ArrayList<> = arrayListOf()
+
+        /**
+         * Запрос при авторизации, проверка на существование пользователя,
+         * проверка на совпадение логина и пароля, инкремент количества входов
+         * **/
+        router.get("/login/:email/:pass").handler { ctx ->
+            //для кроссдоменного запроса
+            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
+
+            val email = ctx.request().getParam("email")
+            val pass = ctx.request().getParam("pass")
+
+            if (jedis.hexists(email, "password") && jedis.hget(email, "password").equals(pass)) {
+                val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
+                val newIp = ctx.request().remoteAddress()
+
+                jedis.hset(email, "countInput", newCountInput.toString())
+                jedis.hset(email, "ip", newIp.toString())
+                jedis.save()
+
+                var user = User(email, jedis.hget(email, "password"), jedis.hget(email, "date"), jedis.hget(email, "ip"), jedis.hget(email, "countInput"))
+                user.countInput = (user.countInput.toInt() - 1).toString()
+                if(usersOnline.contains(user)){ usersOnline.remove(user)}
+                user.countInput = (user.countInput.toInt() + 1).toString()
+                usersOnline.add(user)
+
+                jsonResponse(ctx, responseService.getUser(user))
+            } else {
+                jsonResponse(ctx, responseService.loginFail());
+            }
         }
-        router.get("/:registration/:email/:pass").handler { ctx ->
-            router.route().handler(CorsHandler.create("http://localhost:63342").allowedMethod(HttpMethod.GET))
+
+        /**
+         * Запрос при регистрации, в redis заносится информация о новом пользователе
+         * **/
+        router.get("/registration/:email/:pass").handler { ctx ->
+            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
+
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
             val date = SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis())
             val ip = ctx.request().remoteAddress()
 
-            if(jedis.hexists(email, "password")){
+            if (jedis.hexists(email, "password")) {
                 jsonResponse(ctx, responseService.registrationFail());
-            }else{
+            } else {
                 jedis.hset(email, "password", pass)
                 jedis.hset(email, "date", date)
                 jedis.hset(email, "ip", ip.toString())
                 jedis.hset(email, "countInput", 0.toString())
+                jedis.save()
                 jsonResponse(ctx, responseService.registrationSuccess());
             }
-        }
-
-        router.post("/").handler { ctx ->
-            val user = jsonRequest<User>(ctx, User::class)
-            jsonResponse(ctx, userService.addUser(user))
-        }
-
-        router.delete("/:userId").handler { ctx ->
-            val userId = ctx.request().getParam("userId")
-            jsonResponse(ctx, userService.remUser(userId))
         }
 
         server.requestHandler { router.accept(it) }.listen(port) {
@@ -70,7 +97,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
     fun <T> jsonRequest(ctx: RoutingContext, clazz: KClass<out Any>): T =
             gson.fromJson(ctx.bodyAsString, clazz.java) as T
-
 
     fun <T> jsonResponse(ctx: RoutingContext, future: Future<T>) {
         future.setHandler {

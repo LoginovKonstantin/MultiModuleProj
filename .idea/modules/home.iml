@@ -16,5 +16,8 @@
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.0.2" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-runtime:1.0.2" level="project" />
     <orderEntry type="library" name="KotlinJavaScript" level="project" />
+    <orderEntry type="library" name="Gradle: org.codehaus.groovy:groovy-all:2.3.11" level="project" />
+    <orderEntry type="library" name="Maven: io.vertx:vertx-auth-common:3.2.1" level="project" />
+    <orderEntry type="module" module-name="server" />
   </component>
 </module>
