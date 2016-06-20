@@ -18,7 +18,6 @@ import kotlin.reflect.KClass
 object Vertx3KotlinRestJdbcTutorial2 {
 
     val gson = Gson()
-    val clientAddress = "http://localhost:63342"
 
     @JvmStatic fun main(args: Array<String>) {
 
@@ -40,8 +39,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
          * проверка на совпадение логина и пароля, инкремент количества входов
          * **/
         router.get("/login/:email/:pass").handler { ctx ->
-            //для кроссдоменного запроса
-            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
 
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
@@ -52,9 +49,10 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
                 jedis.hset(email, "countInput", newCountInput.toString())
                 jedis.hset(email, "ip", newIp.toString())
+                jedis.hset(email, "status", "online")
                 jedis.save()
 
-                var user = User(email, jedis.hget(email, "password"), jedis.hget(email, "date"), jedis.hget(email, "ip"), jedis.hget(email, "countInput"))
+                var user = User(email, jedis.hget(email, "password"), jedis.hget(email, "date"), jedis.hget(email, "ip"), jedis.hget(email, "countInput"), jedis.hget(email, "status"))
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
@@ -70,7 +68,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
          * Запрос при регистрации, в redis заносится информация о новом пользователе
          * **/
         router.get("/registration/:email/:pass").handler { ctx ->
-            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
 
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
@@ -84,6 +81,7 @@ object Vertx3KotlinRestJdbcTutorial2 {
                 jedis.hset(email, "date", date)
                 jedis.hset(email, "ip", ip.toString())
                 jedis.hset(email, "countInput", 0.toString())
+                jedis.hset(email, "status", "offline")
                 jedis.save()
                 jsonResponse(ctx, responseService.registrationSuccess());
             }
