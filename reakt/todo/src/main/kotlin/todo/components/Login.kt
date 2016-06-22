@@ -6,9 +6,9 @@ import kotlin.browser.document
 
 data class InputState(var email: String, var pass: String, var message: String)
 
-class Login : ComponentSpec<Unit, InputState>() {
+val addressServer = "http://localhost:8080"
 
-    val addressServer = "http://localhost:8080"
+class Login : ComponentSpec<Unit, InputState>() {
 
     companion object {
         val factory = react.createFactory(Login())
@@ -20,8 +20,9 @@ class Login : ComponentSpec<Unit, InputState>() {
 
     override fun Component.render() {
         div {
-            if(!getCookie("email").equals("") && !getCookie("pass").equals("")){
-                logIn(getCookie("email"), getCookie("pass"))
+            if(!getCookie("id").equals("")){
+                console.log(getCookie("id"))
+                logIn(null, null, getCookie("id"))
             }else{
                 input ({
                     className = "form-control"
@@ -39,7 +40,7 @@ class Login : ComponentSpec<Unit, InputState>() {
                 div ({className = "divWithBtn"}) {
                     button ({
                         className = "btn btn-success"
-                        onClick = { if(validInputs()) logIn(state.email, state.pass) }
+                        onClick = { if(validInputs()) logIn(state.email, state.pass, null) }
                     }) { text("Вход") }
                 }
                 div ({className = "divWithBtn"}) {
@@ -56,24 +57,30 @@ class Login : ComponentSpec<Unit, InputState>() {
 
 
 
-    private fun logIn(email: String, pass: String) {
+    private fun logIn(email: String?, pass: String?, id: String?) {
+        var user: String
+        var userPropertiesList: List<String> = listOf()
         val req = XMLHttpRequest()
-        req.open("GET", "$addressServer/login/$email/$pass")
-        document.cookie = "email = $email"
-        document.cookie = "pass = $pass"
+        if(email.equals(null) && pass.equals(null)){
+            req.open("GET", "$addressServer/getUserId/$id")
+        }else{
+            req.open("GET", "$addressServer/login/$email/$pass")
+        }
         req.onload = {
             if(req.responseText.equals("\"loginFail\"")){
                 state = InputState("", "", "Пользователя не существует")
             }else {
-                var user = req.responseText.replace("\"","")
-                var userPropertiesList: List<String> = user.split(",")
+                user = req.responseText.replace("\"","")
+                userPropertiesList = user.split(",")
+                document.cookie = "id = ${userPropertiesList[6]}; expires = ${js("new Date(new Date().getTime() + 60 * 1000 * 5).toUTCString()")}"
                 react.render(createPersonalArea(UserProps(
                         userPropertiesList[0],//email
                         userPropertiesList[1],//password
                         userPropertiesList[2],//date
                         userPropertiesList[3],//ip
                         userPropertiesList[4],//countInput
-                        userPropertiesList[5]//status
+                        userPropertiesList[5],//status
+                        userPropertiesList[6]//id
                 )), document.getElementById("app")!!)
             }
             console.log(req.responseText)

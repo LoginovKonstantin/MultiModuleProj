@@ -1,7 +1,9 @@
 package todo.components
 
+import addressServer
 import com.github.andrewoma.react.*
 import createLogin
+import org.w3c.xhr.XMLHttpRequest
 import kotlin.browser.document
 
 /**
@@ -13,7 +15,8 @@ data class UserProps(
         val date: String,
         var ip: String,
         var countInput: String,
-        var status: String
+        var status: String,
+        var id: String
 )
 
 class PersonalArea : ComponentSpec<UserProps, String>() {
@@ -36,7 +39,7 @@ class PersonalArea : ComponentSpec<UserProps, String>() {
             button ({
                 className = "btn btn-danger"
                 onClick = {
-                    deleteCookie();
+                    exit(props);
                     react.render(createLogin(), document.getElementById("app")!!)
                 }
             }){ text("Выйти") }
@@ -44,12 +47,14 @@ class PersonalArea : ComponentSpec<UserProps, String>() {
         }
     }
 
-    fun deleteCookie() {
-        js("var date = new Date(); date.setTime(date.getTime() - 1);")
-        document.cookie = "${props.email} = ; expires = +' ${js("date.toGMTString()")}';"
-        document.cookie = "${props.pass} = ; expires = +' ${js("date.toGMTString()")}';"
-        console.log(document.cookie)
+    private fun exit(props: UserProps) {
+        document.cookie = "id = ; expires = ${js("new Date(0).toUTCString()")}"
+        val req = XMLHttpRequest()
+        req.open("GET", "$addressServer/exit/${props.email}")
+        req.onload = { }
+        req.send()
     }
+
 }
 
 fun createPersonalArea(userProps: UserProps)
