@@ -39,6 +39,7 @@ object Vertx3KotlinRestJdbcTutorial2 {
             idUser++
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
+            println("entrance")
 
             if (jedis.hexists(email, "password") && jedis.hget(email, "password").equals(pass)) {
                 val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
@@ -46,7 +47,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
                 jedis.hset(email, "countInput", newCountInput.toString())
                 jedis.hset(email, "ip", newIp.toString())
-                jedis.hset(email, "status", "online")
                 jedis.hset(email, "id", idUser.toString())
                 jedis.save()
 
@@ -55,7 +55,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
                         jedis.hget(email, "date"),
                         jedis.hget(email, "ip"),
                         jedis.hget(email, "countInput"),
-                        jedis.hget(email, "status"),
                         jedis.hget(email, "id"))
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
@@ -73,17 +72,17 @@ object Vertx3KotlinRestJdbcTutorial2 {
         */
         router.get("/getUserId/:id").handler { ctx ->
             val setKeys = jedis.keys("*").toList()
-            for(i in 1..setKeys.size - 1){
+            for(i in 0..setKeys.size - 1){
                 val jedisId = jedis.hget(setKeys[i], "id")
-                val currentId = ctx.request().getParam("id").toString()
+                val currentId = ctx.request().getParam("id")
                 if(jedisId.equals(currentId)){
                     val user = User(setKeys[i],
                             jedis.hget(setKeys[i], "password"),
                             jedis.hget(setKeys[i], "date"),
                             jedis.hget(setKeys[i], "ip"),
                             jedis.hget(setKeys[i], "countInput"),
-                            jedis.hget(setKeys[i], "status"),
                             jedis.hget(setKeys[i], "id"))
+                    println(user)
                     jsonResponse(ctx, responseService.getUser(user))
                 }
             }
@@ -103,10 +102,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
                     }
                 }
             }
-
-            jedis.hset(email, "status", "offline")
-            jedis.save()
-            idUser--
         }
 
         /**
@@ -125,7 +120,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
                 jedis.hset(email, "date", date)
                 jedis.hset(email, "ip", ip.toString())
                 jedis.hset(email, "countInput", 0.toString())
-                jedis.hset(email, "status", "offline")
                 jedis.save()
                 jsonResponse(ctx, responseService.registrationSuccess());
             }

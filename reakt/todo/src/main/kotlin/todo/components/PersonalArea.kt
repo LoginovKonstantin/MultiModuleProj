@@ -15,7 +15,6 @@ data class UserProps(
         val date: String,
         var ip: String,
         var countInput: String,
-        var status: String,
         var id: String
 )
 

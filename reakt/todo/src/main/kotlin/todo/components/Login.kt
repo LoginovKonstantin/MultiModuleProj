@@ -55,32 +55,32 @@ class Login : ComponentSpec<Unit, InputState>() {
         }
     }
 
-
-
     private fun logIn(email: String?, pass: String?, id: String?) {
         var user: String
         var userPropertiesList: List<String> = listOf()
-        val req = XMLHttpRequest()
+        val req: XMLHttpRequest
         if(email.equals(null) && pass.equals(null)){
+            req = XMLHttpRequest()
             req.open("GET", "$addressServer/getUserId/$id")
         }else{
+            req = XMLHttpRequest()
             req.open("GET", "$addressServer/login/$email/$pass")
         }
         req.onload = {
             if(req.responseText.equals("\"loginFail\"")){
                 state = InputState("", "", "Пользователя не существует")
             }else {
+                console.log("по create personalarea")
                 user = req.responseText.replace("\"","")
                 userPropertiesList = user.split(",")
-                document.cookie = "id = ${userPropertiesList[6]}; expires = ${js("new Date(new Date().getTime() + 60 * 1000 * 5).toUTCString()")}"
+                document.cookie = "id = ${userPropertiesList[5]}; expires = ${js("new Date(new Date().getTime() + 60 * 1000 * 5).toUTCString()")}"
                 react.render(createPersonalArea(UserProps(
                         userPropertiesList[0],//email
                         userPropertiesList[1],//password
                         userPropertiesList[2],//date
                         userPropertiesList[3],//ip
                         userPropertiesList[4],//countInput
-                        userPropertiesList[5],//status
-                        userPropertiesList[6]//id
+                        userPropertiesList[5]//id
                 )), document.getElementById("app")!!)
             }
             console.log(req.responseText)
