@@ -4,21 +4,17 @@
 import com.google.gson.Gson
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.RoutingContext
-import io.vertx.ext.web.handler.CorsHandler
 import redis.clients.jedis.Jedis
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.function.Predicate
 import kotlin.reflect.KClass
 
 object Vertx3KotlinRestJdbcTutorial2 {
 
     val gson = Gson()
-    val clientAddress = "http://localhost:63342"
+    var idUser = 0;
 
     @JvmStatic fun main(args: Array<String>) {
 
@@ -38,13 +34,12 @@ object Vertx3KotlinRestJdbcTutorial2 {
         /**
          * Запрос при авторизации, проверка на существование пользователя,
          * проверка на совпадение логина и пароля, инкремент количества входов
-         * **/
+         */
         router.get("/login/:email/:pass").handler { ctx ->
-            //для кроссдоменного запроса
-            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
-
+            idUser++
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
+            println("entrance")
 
             if (jedis.hexists(email, "password") && jedis.hget(email, "password").equals(pass)) {
                 val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
@@ -52,9 +47,15 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
                 jedis.hset(email, "countInput", newCountInput.toString())
                 jedis.hset(email, "ip", newIp.toString())
+                jedis.hset(email, "id", idUser.toString())
                 jedis.save()
 
-                var user = User(email, jedis.hget(email, "password"), jedis.hget(email, "date"), jedis.hget(email, "ip"), jedis.hget(email, "countInput"))
+                val user = User(email,
+                        jedis.hget(email, "password"),
+                        jedis.hget(email, "date"),
+                        jedis.hget(email, "ip"),
+                        jedis.hget(email, "countInput"),
+                        jedis.hget(email, "id"))
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
@@ -67,11 +68,46 @@ object Vertx3KotlinRestJdbcTutorial2 {
         }
 
         /**
-         * Запрос при регистрации, в redis заносится информация о новом пользователе
-         * **/
-        router.get("/registration/:email/:pass").handler { ctx ->
-            router.route().handler(CorsHandler.create(clientAddress).allowedMethod(HttpMethod.GET))
+        * Взять пользователя по id
+        */
+        router.get("/getUserId/:id").handler { ctx ->
+            val setKeys = jedis.keys("*").toList()
+            for(i in 0..setKeys.size - 1){
+                val jedisId = jedis.hget(setKeys[i], "id")
+                val currentId = ctx.request().getParam("id")
+                if(jedisId.equals(currentId)){
+                    val user = User(setKeys[i],
+                            jedis.hget(setKeys[i], "password"),
+                            jedis.hget(setKeys[i], "date"),
+                            jedis.hget(setKeys[i], "ip"),
+                            jedis.hget(setKeys[i], "countInput"),
+                            jedis.hget(setKeys[i], "id"))
+                    println(user)
+                    jsonResponse(ctx, responseService.getUser(user))
+                }
+            }
+        }
 
+        /**
+         *Запрос при выходе пользователя
+         */
+        router.get("/exit/:email").handler { ctx ->
+            val email = ctx.request().getParam("email")
+            if(usersOnline.size == 1){
+                usersOnline = arrayListOf()
+            }else{
+                for(i in 0..usersOnline.size - 1){
+                    if(usersOnline[i].email.equals(email)){
+                        usersOnline.remove(usersOnline[i])
+                    }
+                }
+            }
+        }
+
+        /**
+         * Запрос при регистрации, в redis заносится информация о новом пользователе
+         */
+        router.get("/registration/:email/:pass").handler { ctx ->
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
             val date = SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis())
