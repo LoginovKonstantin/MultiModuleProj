@@ -11,13 +11,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.reflect.KClass
 
-object Vertx3KotlinRestJdbcTutorial2 {
+//пользователи онлайн
+var usersOnline: ArrayList<User> = arrayListOf()
+
+object Vertx3KotlinRestJdbcTutorial2{
 
     val gson = Gson()
     var idUser = 0;
 
     @JvmStatic fun main(args: Array<String>) {
-
+        ThreadCheckUsers()
         val jedis: Jedis = Jedis("localhost", 6379)
         val port = 8080
         val vertx = Vertx.vertx()
@@ -26,8 +29,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
         val responseService = ResponseService()
 
-        //пользователи онлайн
-        var usersOnline: ArrayList<User> = arrayListOf()
         //созданые чаты
 //        var chats: ArrayList<> = arrayListOf()
 
@@ -55,7 +56,8 @@ object Vertx3KotlinRestJdbcTutorial2 {
                         jedis.hget(email, "date"),
                         jedis.hget(email, "ip"),
                         jedis.hget(email, "countInput"),
-                        jedis.hget(email, "id"))
+                        jedis.hget(email, "id"),
+                        System.currentTimeMillis())
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
@@ -81,7 +83,10 @@ object Vertx3KotlinRestJdbcTutorial2 {
                             jedis.hget(setKeys[i], "date"),
                             jedis.hget(setKeys[i], "ip"),
                             jedis.hget(setKeys[i], "countInput"),
-                            jedis.hget(setKeys[i], "id"))
+                            jedis.hget(setKeys[i], "id"),
+                            System.currentTimeMillis())
+                    if(usersOnline.contains(user)){ usersOnline.remove(user)}
+                    usersOnline.add(user)
                     println(user)
                     jsonResponse(ctx, responseService.getUser(user))
                 }
