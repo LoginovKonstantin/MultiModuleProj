@@ -25,27 +25,27 @@ class Login : ComponentSpec<Unit, InputState>() {
                 logIn(null, null, getCookie("id"))
             }else{
                 input ({
-                    className = "form-control"
+                    className = "loginInput form-control"
                     placeholder = "Email"
                     onChange = {state.email = it.currentTarget.value}
                     defaultValue = state.email
                 }){}
                 input ({
                     type = "password"
-                    className = "form-control"
+                    className = "loginInput form-control"
                     placeholder = "Password"
                     onChange = {state.pass = it.currentTarget.value}
                     defaultValue = state.pass
                 }){}
                 div ({className = "divWithBtn"}) {
                     button ({
-                        className = "btn btn-success"
+                        className = "loginBtn btn btn-success"
                         onClick = { if(validInputs()) logIn(state.email, state.pass, null) }
                     }) { text("Вход") }
                 }
                 div ({className = "divWithBtn"}) {
                     button ({
-                        className = "btn btn-success"
+                        className = "loginBtn btn btn-success"
                         onClick = { if(validInputs()) registration()  }
                     }) { text("Регистрация") }
                     br { }

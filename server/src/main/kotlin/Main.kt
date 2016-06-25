@@ -13,11 +13,14 @@ import kotlin.reflect.KClass
 
 //пользователи онлайн
 var usersOnline: ArrayList<User> = arrayListOf()
+//созданые чаты
+var chats: ArrayList<Chat> = arrayListOf()
 
 object Vertx3KotlinRestJdbcTutorial2{
 
     val gson = Gson()
     var idUser = 0;
+    var idChat = 0;
 
     @JvmStatic fun main(args: Array<String>) {
         ThreadCheckUsers()
@@ -29,9 +32,6 @@ object Vertx3KotlinRestJdbcTutorial2{
 
         val responseService = ResponseService()
 
-        //созданые чаты
-//        var chats: ArrayList<> = arrayListOf()
-
         /**
          * Запрос при авторизации, проверка на существование пользователя,
          * проверка на совпадение логина и пароля, инкремент количества входов
@@ -40,7 +40,6 @@ object Vertx3KotlinRestJdbcTutorial2{
             idUser++
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
-            println("entrance")
 
             if (jedis.hexists(email, "password") && jedis.hget(email, "password").equals(pass)) {
                 val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
@@ -48,7 +47,6 @@ object Vertx3KotlinRestJdbcTutorial2{
 
                 jedis.hset(email, "countInput", newCountInput.toString())
                 jedis.hset(email, "ip", newIp.toString())
-                jedis.hset(email, "id", idUser.toString())
                 jedis.save()
 
                 val user = User(email,
@@ -56,13 +54,13 @@ object Vertx3KotlinRestJdbcTutorial2{
                         jedis.hget(email, "date"),
                         jedis.hget(email, "ip"),
                         jedis.hget(email, "countInput"),
-                        jedis.hget(email, "id"),
+                        idUser.toString(),
                         System.currentTimeMillis())
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
                 usersOnline.add(user)
-
+                println("entrance" + user)
                 jsonResponse(ctx, responseService.getUser(user))
             } else {
                 jsonResponse(ctx, responseService.loginFail());
@@ -73,21 +71,23 @@ object Vertx3KotlinRestJdbcTutorial2{
         * Взять пользователя по id
         */
         router.get("/getUserId/:id").handler { ctx ->
-            val setKeys = jedis.keys("*").toList()
-            for(i in 0..setKeys.size - 1){
-                val jedisId = jedis.hget(setKeys[i], "id")
-                val currentId = ctx.request().getParam("id")
-                if(jedisId.equals(currentId)){
-                    val user = User(setKeys[i],
-                            jedis.hget(setKeys[i], "password"),
-                            jedis.hget(setKeys[i], "date"),
-                            jedis.hget(setKeys[i], "ip"),
-                            jedis.hget(setKeys[i], "countInput"),
-                            jedis.hget(setKeys[i], "id"),
+            val currentId = ctx.request().getParam("id")
+            for(i in 0..usersOnline.size - 1){
+                if(usersOnline[i].id.equals(currentId)){
+                    val user = User(usersOnline[i].email,usersOnline[i].pass,
+                            usersOnline[i].date, usersOnline[i].ip,
+                            usersOnline[i].countInput, usersOnline[i].id,
                             System.currentTimeMillis())
-                    if(usersOnline.contains(user)){ usersOnline.remove(user)}
+                    if(usersOnline.size == 1){
+                        usersOnline = arrayListOf()
+                    }else {
+                        for (i in 0..usersOnline.size - 1) {
+                            if (usersOnline[i].id.equals(currentId)) {
+                                usersOnline.remove(usersOnline[i])
+                            }
+                        }
+                    }
                     usersOnline.add(user)
-                    println(user)
                     jsonResponse(ctx, responseService.getUser(user))
                 }
             }

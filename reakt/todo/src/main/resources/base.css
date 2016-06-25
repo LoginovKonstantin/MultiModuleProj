@@ -1,15 +1,27 @@
-.btn{
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 10px;
-    width: 120px;
+#app{
+    margin: 2%
 }
-.divWithBtn{
-    text-align: center;
-}
-.form-control{
+.loginInput{
     margin-left: auto;
     margin-right: auto;
     margin-top: 10px;
     width: 250px;
+}
+.loginBtn {
+    width: 120px;
+    margin-top: 10px;
+}
+.divWithBtn{
+    text-align: center;
+}
+.inputNameChat{
+    width: 200px;
+}
+.divCreateChat{
+    float: left;
+    margin-right: 5px;
+}
+.btn{
+    margin-left: auto;
+    margin-right: auto;
 }
