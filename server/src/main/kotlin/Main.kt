@@ -60,7 +60,7 @@ object Vertx3KotlinRestJdbcTutorial2{
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
                 usersOnline.add(user)
-                println("entrance" + user)
+                println("entrance " + user)
                 jsonResponse(ctx, responseService.getUser(user))
             } else {
                 jsonResponse(ctx, responseService.loginFail());
@@ -81,11 +81,14 @@ object Vertx3KotlinRestJdbcTutorial2{
                     if(usersOnline.size == 1){
                         usersOnline = arrayListOf()
                     }else {
+                        var restartUser: User? = null
                         for (i in 0..usersOnline.size - 1) {
                             if (usersOnline[i].id.equals(currentId)) {
-                                usersOnline.remove(usersOnline[i])
+                                restartUser = usersOnline[i]
                             }
                         }
+                        if(restartUser != null)
+                            usersOnline.remove(restartUser)
                     }
                     usersOnline.add(user)
                     jsonResponse(ctx, responseService.getUser(user))
@@ -98,14 +101,19 @@ object Vertx3KotlinRestJdbcTutorial2{
          */
         router.get("/exit/:email").handler { ctx ->
             val email = ctx.request().getParam("email")
+            println(email)
             if(usersOnline.size == 1){
                 usersOnline = arrayListOf()
             }else{
+                var exitUser: User? = null
                 for(i in 0..usersOnline.size - 1){
                     if(usersOnline[i].email.equals(email)){
-                        usersOnline.remove(usersOnline[i])
+                        println("exit " + usersOnline[i])
+                        exitUser = usersOnline[i]
                     }
                 }
+                if(exitUser != null)
+                    usersOnline.remove(exitUser)
             }
         }
 
