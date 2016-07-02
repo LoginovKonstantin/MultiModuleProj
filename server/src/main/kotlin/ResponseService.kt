@@ -8,9 +8,10 @@ data class User(val email: String,
                 val date: String,
                 var ip: String,
                 var countInput: String,
-                var id: String) {
+                var id: String,
+                var lastSeen: Long) {
     override fun toString(): String {
-        return "$email,$pass,$date,$ip,$countInput,$id"
+        return "$email,$pass,$date,$ip,$countInput,$id,$lastSeen"
     }
 }
 
@@ -37,10 +38,10 @@ class ResponseService {
                 user.email, user.pass,
                 user.date, user.ip,
                 user.countInput,
-                user.id).toString())
+                user.id,user.lastSeen).toString())
     }
 
-    fun getUser(email: String, pass: String, date: String, ip: String, countInput: String, id: String): Future<String> {
-        return Future.succeededFuture(User(email, pass, date, ip, countInput, id).toString())
+    fun getUser(email: String, pass: String, date: String, ip: String, countInput: String, id: String, lastSeen: Long): Future<String> {
+        return Future.succeededFuture(User(email, pass, date, ip, countInput, id, lastSeen).toString())
     }
 }

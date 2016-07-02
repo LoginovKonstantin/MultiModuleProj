@@ -35,8 +35,10 @@ class PersonalArea : ComponentSpec<UserProps, String>() {
                     text("Добро пожаловать, ${props.email}");
                 }
             }
+
+            listChats()
             button ({
-                className = "btn btn-danger"
+                className = "loginBtn btn btn-danger"
                 onClick = {
                     exit(props);
                     react.render(createLogin(), document.getElementById("app")!!)

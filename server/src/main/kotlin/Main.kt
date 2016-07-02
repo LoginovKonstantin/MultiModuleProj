@@ -11,13 +11,19 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.reflect.KClass
 
-object Vertx3KotlinRestJdbcTutorial2 {
+//пользователи онлайн
+var usersOnline: ArrayList<User> = arrayListOf()
+//созданые чаты
+var chats: ArrayList<Chat> = arrayListOf()
+
+object Vertx3KotlinRestJdbcTutorial2{
 
     val gson = Gson()
     var idUser = 0;
+    var idChat = 0;
 
     @JvmStatic fun main(args: Array<String>) {
-
+        ThreadCheckUsers()
         val jedis: Jedis = Jedis("localhost", 6379)
         val port = 8080
         val vertx = Vertx.vertx()
@@ -25,11 +31,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
         val router = Router.router(vertx)
 
         val responseService = ResponseService()
-
-        //пользователи онлайн
-        var usersOnline: ArrayList<User> = arrayListOf()
-        //созданые чаты
-//        var chats: ArrayList<> = arrayListOf()
 
         /**
          * Запрос при авторизации, проверка на существование пользователя,
@@ -39,7 +40,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
             idUser++
             val email = ctx.request().getParam("email")
             val pass = ctx.request().getParam("pass")
-            println("entrance")
 
             if (jedis.hexists(email, "password") && jedis.hget(email, "password").equals(pass)) {
                 val newCountInput = (jedis.hget(email, "countInput")).toInt() + 1
@@ -47,7 +47,6 @@ object Vertx3KotlinRestJdbcTutorial2 {
 
                 jedis.hset(email, "countInput", newCountInput.toString())
                 jedis.hset(email, "ip", newIp.toString())
-                jedis.hset(email, "id", idUser.toString())
                 jedis.save()
 
                 val user = User(email,
@@ -55,12 +54,13 @@ object Vertx3KotlinRestJdbcTutorial2 {
                         jedis.hget(email, "date"),
                         jedis.hget(email, "ip"),
                         jedis.hget(email, "countInput"),
-                        jedis.hget(email, "id"))
+                        idUser.toString(),
+                        System.currentTimeMillis())
                 user.countInput = (user.countInput.toInt() - 1).toString()
                 if(usersOnline.contains(user)){ usersOnline.remove(user)}
                 user.countInput = (user.countInput.toInt() + 1).toString()
                 usersOnline.add(user)
-
+                println("entrance " + user)
                 jsonResponse(ctx, responseService.getUser(user))
             } else {
                 jsonResponse(ctx, responseService.loginFail());
@@ -71,18 +71,26 @@ object Vertx3KotlinRestJdbcTutorial2 {
         * Взять пользователя по id
         */
         router.get("/getUserId/:id").handler { ctx ->
-            val setKeys = jedis.keys("*").toList()
-            for(i in 0..setKeys.size - 1){
-                val jedisId = jedis.hget(setKeys[i], "id")
-                val currentId = ctx.request().getParam("id")
-                if(jedisId.equals(currentId)){
-                    val user = User(setKeys[i],
-                            jedis.hget(setKeys[i], "password"),
-                            jedis.hget(setKeys[i], "date"),
-                            jedis.hget(setKeys[i], "ip"),
-                            jedis.hget(setKeys[i], "countInput"),
-                            jedis.hget(setKeys[i], "id"))
-                    println(user)
+            val currentId = ctx.request().getParam("id")
+            for(i in 0..usersOnline.size - 1){
+                if(usersOnline[i].id.equals(currentId)){
+                    val user = User(usersOnline[i].email,usersOnline[i].pass,
+                            usersOnline[i].date, usersOnline[i].ip,
+                            usersOnline[i].countInput, usersOnline[i].id,
+                            System.currentTimeMillis())
+                    if(usersOnline.size == 1){
+                        usersOnline = arrayListOf()
+                    }else {
+                        var restartUser: User? = null
+                        for (i in 0..usersOnline.size - 1) {
+                            if (usersOnline[i].id.equals(currentId)) {
+                                restartUser = usersOnline[i]
+                            }
+                        }
+                        if(restartUser != null)
+                            usersOnline.remove(restartUser)
+                    }
+                    usersOnline.add(user)
                     jsonResponse(ctx, responseService.getUser(user))
                 }
             }
@@ -93,14 +101,19 @@ object Vertx3KotlinRestJdbcTutorial2 {
          */
         router.get("/exit/:email").handler { ctx ->
             val email = ctx.request().getParam("email")
+            println(email)
             if(usersOnline.size == 1){
                 usersOnline = arrayListOf()
             }else{
+                var exitUser: User? = null
                 for(i in 0..usersOnline.size - 1){
                     if(usersOnline[i].email.equals(email)){
-                        usersOnline.remove(usersOnline[i])
+                        println("exit " + usersOnline[i])
+                        exitUser = usersOnline[i]
                     }
                 }
+                if(exitUser != null)
+                    usersOnline.remove(exitUser)
             }
         }
 
