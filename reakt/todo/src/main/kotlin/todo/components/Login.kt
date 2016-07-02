@@ -19,9 +19,13 @@ class Login : ComponentSpec<Unit, InputState>() {
     }
 
     override fun Component.render() {
-        div {
+        div ({
+            onKeyDown = {
+                if(it.keyCode == 13) {
+                    if(validInputs()) logIn(state.email, state.pass, null)}
+                }
+        }){
             if(!getCookie("id").equals("")){
-                console.log(getCookie("id"))
                 logIn(null, null, getCookie("id"))
             }else{
                 input ({
@@ -56,8 +60,7 @@ class Login : ComponentSpec<Unit, InputState>() {
     }
 
     private fun logIn(email: String?, pass: String?, id: String?) {
-        var user: String
-        var userPropertiesList: List<String> = listOf()
+        var userPropertiesList: List<String>
         val req: XMLHttpRequest
         if(email.equals(null) && pass.equals(null)){
             req = XMLHttpRequest()
@@ -70,9 +73,7 @@ class Login : ComponentSpec<Unit, InputState>() {
             if(req.responseText.equals("\"loginFail\"")){
                 state = InputState("", "", "Пользователя не существует")
             }else {
-                console.log("по create personalarea")
-                user = req.responseText.replace("\"","")
-                userPropertiesList = user.split(",")
+                userPropertiesList = req.responseText.replace("\"", "").split(",")
                 document.cookie = "id = ${userPropertiesList[5]}; expires = ${js("new Date(new Date().getTime() + 60 * 1000 * 5).toUTCString()")}"
                 react.render(createPersonalArea(UserProps(
                         userPropertiesList[0],//email
@@ -83,7 +84,6 @@ class Login : ComponentSpec<Unit, InputState>() {
                         userPropertiesList[5]//id
                 )), document.getElementById("app")!!)
             }
-            console.log(req.responseText)
         }
         req.send()
     }
@@ -97,7 +97,6 @@ class Login : ComponentSpec<Unit, InputState>() {
             }else {
                 state = InputState("", "", "Пользователь уже существует")
             }
-            console.log(req.responseText)
         }
         req.send()
     }

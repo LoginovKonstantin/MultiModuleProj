@@ -11,6 +11,19 @@
     width: 120px;
     margin-top: 10px;
 }
+.welcome{
+    float:left;
+    height:33px;
+    font-size:85%;
+    margin-right:5px;
+}
+.divHeader{
+    margin-bottom:15px;
+}
+.btnEntranceChat{
+    position: absolute;
+    right: 5px;
+}
 .divWithBtn{
     text-align: center;
 }
@@ -24,4 +37,8 @@
 .btn{
     margin-left: auto;
     margin-right: auto;
+}
+.chatsList{
+    margin-top: 10px;
+    width: 200px;
 }
