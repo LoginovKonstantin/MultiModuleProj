@@ -4,6 +4,7 @@ import addressServer
 import com.github.andrewoma.react.*
 import createLogin
 import org.w3c.xhr.XMLHttpRequest
+import java.util.*
 import kotlin.browser.document
 
 /**
@@ -18,32 +19,35 @@ data class UserProps(
         var id: String
 )
 
-class PersonalArea : ComponentSpec<UserProps, String>() {
+data class PersonalAreaState(var listNameChat: ArrayList<String>)
+
+class PersonalArea : ComponentSpec<UserProps, PersonalAreaState>() {
 
     companion object {
         val factory = react.createFactory(PersonalArea())
     }
 
-    override fun initialState(): String? {
-        return ""
+    override fun initialState(): PersonalAreaState? {
+        return PersonalAreaState(listNameChat = getNamesChats())
     }
 
     override fun Component.render() {
         div {
-            h3 {
-                span ({className = "label label-success"}){
-                    text("Добро пожаловать, ${props.email}");
+            div({className = "divHeader"}) {
+                h3 {
+                    span ({className = "welcome label label-success"}){
+                        text("Добро пожаловать, ${props.email}");
+                    }
                 }
+                button ({
+                    className = "btn btn-danger"
+                    onClick = {
+                        exit(props);
+                        react.render(createLogin(), document.getElementById("app")!!)
+                    }
+                }){ text("Выйти") }
             }
-
-            listChats()
-            button ({
-                className = "loginBtn btn btn-danger"
-                onClick = {
-                    exit(props);
-                    react.render(createLogin(), document.getElementById("app")!!)
-                }
-            }){ text("Выйти") }
+            listChats(state.listNameChat)
 
         }
     }
@@ -56,6 +60,21 @@ class PersonalArea : ComponentSpec<UserProps, String>() {
         req.send()
     }
 
+}
+
+fun getNamesChats(): ArrayList<String>{
+    val chatNames: ArrayList<String> = arrayListOf()
+    val req = XMLHttpRequest()
+    req.open("GET", "$addressServer/getExistChats", false)
+    req.onload = {
+        if(req.responseText.equals("\"getExistChatsFail\"")){
+            println("Чатов нет")
+        }else{
+            (req.responseText.replace("\"", "").split(";")).forEach { chatNames.add(it) }
+        }
+    }
+    req.send()
+    return chatNames
 }
 
 fun createPersonalArea(userProps: UserProps)

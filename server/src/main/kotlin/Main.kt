@@ -23,6 +23,7 @@ object Vertx3KotlinRestJdbcTutorial2{
     var idChat = 0;
 
     @JvmStatic fun main(args: Array<String>) {
+
         ThreadCheckUsers()
         val jedis: Jedis = Jedis("localhost", 6379)
         val port = 8080
@@ -68,13 +69,40 @@ object Vertx3KotlinRestJdbcTutorial2{
         }
 
         /**
+         * Создание чата
+         */
+        router.get("/newChat/:nameChat").handler{ctx ->
+            val nameNewChat = ctx.request().getParam("nameChat")
+            var chatExist = false
+            chats.forEach { if(it.nameChat.equals(nameNewChat)) chatExist = true }
+            if(chatExist){
+                jsonResponse(ctx, responseService.createNewChatFail())
+            }else{
+                val newChat = Chat(nameNewChat)
+                chats.add(newChat)
+                jsonResponse(ctx, responseService.createNewChatSuccess(newChat))
+            }
+        }
+
+        /**
+         *  Взять все чаты
+         */
+        router.get("/getExistChats").handler { ctx ->
+            if(chats.size > 0){
+                jsonResponse(ctx, responseService.getNameExistChats(chats))
+            }else{
+                jsonResponse(ctx, responseService.chatsNotExist())
+            }
+        }
+
+        /**
         * Взять пользователя по id
         */
         router.get("/getUserId/:id").handler { ctx ->
             val currentId = ctx.request().getParam("id")
             for(i in 0..usersOnline.size - 1){
                 if(usersOnline[i].id.equals(currentId)){
-                    val user = User(usersOnline[i].email,usersOnline[i].pass,
+                    val user = User(usersOnline[i].email, usersOnline[i].pass,
                             usersOnline[i].date, usersOnline[i].ip,
                             usersOnline[i].countInput, usersOnline[i].id,
                             System.currentTimeMillis())
