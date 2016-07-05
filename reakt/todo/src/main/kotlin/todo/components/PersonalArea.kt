@@ -32,24 +32,23 @@ class PersonalArea : ComponentSpec<UserProps, PersonalAreaState>() {
     }
 
     override fun Component.render() {
-        div {
-            div({className = "divHeader"}) {
-                h3 {
-                    span ({className = "welcome label label-success"}){
-                        text("Добро пожаловать, ${props.email}");
-                    }
+        div ({className = "row-fluid left-n-right-side"}){
+            h3 {
+                span ({className = "welcome label label-success"}){
+                    text("Добро пожаловать, ${props.email}");
                 }
-                button ({
-                    className = "btn btn-danger"
-                    onClick = {
-                        exit(props);
-                        react.render(createLogin(), document.getElementById("app")!!)
-                    }
-                }){ text("Выйти") }
             }
-            listChats(state.listNameChat)
+            button ({
+                className = "btn btn-danger"
+                onClick = {
+                    exit(props);
+                    react.render(createLogin(), document.getElementById("app")!!)
+                }
+            }){ text("Выйти") }
 
+            ListChats(state.listNameChat, props)
         }
+
     }
 
     private fun exit(props: UserProps) {

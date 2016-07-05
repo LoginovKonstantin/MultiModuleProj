@@ -1,5 +1,9 @@
+html, body {
+  width: 100%;
+  height: 100%;
+}
 #app{
-    margin: 2%
+    height: 100%;
 }
 .loginInput{
     margin-left: auto;
@@ -16,9 +20,7 @@
     height:33px;
     font-size:85%;
     margin-right:5px;
-}
-.divHeader{
-    margin-bottom:15px;
+    margin-left: 15px;
 }
 .btnEntranceChat{
     position: absolute;
@@ -27,18 +29,27 @@
 .divWithBtn{
     text-align: center;
 }
-.inputNameChat{
-    width: 200px;
-}
-.divCreateChat{
-    float: left;
-    margin-right: 5px;
-}
 .btn{
     margin-left: auto;
     margin-right: auto;
 }
-.chatsList{
+.left-n-right-side{
+    height:100%;
+}
+.left-side{
     margin-top: 10px;
+    height:90%;
     width: 200px;
+    float: left;
+}
+.list-group{
+    height:88%;
+    overflow: auto;
+}
+.right-side{
+    padding-top: 10px;
+    margin-left: 250px;
+}
+.create-chat-input{
+    margin-bottom: 5px;
 }

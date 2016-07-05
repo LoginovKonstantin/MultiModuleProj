@@ -71,16 +71,21 @@ object Vertx3KotlinRestJdbcTutorial2{
         /**
          * Создание чата
          */
-        router.get("/newChat/:nameChat").handler{ctx ->
+        router.get("/newChat/:nameChat/:authorChat").handler{ctx ->
             val nameNewChat = ctx.request().getParam("nameChat")
+            val author = ctx.request().getParam("authorChat")
+
             var chatExist = false
-            chats.forEach { if(it.nameChat.equals(nameNewChat)) chatExist = true }
+            jedis.hgetAll("chats").forEach { if(it.value.equals(nameNewChat)) chatExist = true }
             if(chatExist){
                 jsonResponse(ctx, responseService.createNewChatFail())
             }else{
-                val newChat = Chat(nameNewChat)
-                chats.add(newChat)
-                jsonResponse(ctx, responseService.createNewChatSuccess(newChat))
+                jedis.hset(nameNewChat, "authorChat", author)
+                jedis.hset(nameNewChat, "date", SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis()))
+
+                jedis.hset("chats", nameNewChat, nameNewChat)
+                jedis.save()
+                jsonResponse(ctx, responseService.createNewChatSuccess(Chat(nameNewChat)))
             }
         }
 
@@ -88,7 +93,9 @@ object Vertx3KotlinRestJdbcTutorial2{
          *  Взять все чаты
          */
         router.get("/getExistChats").handler { ctx ->
-            if(chats.size > 0){
+            if(jedis.hgetAll("chats").size > 0){
+                val chats: ArrayList<Chat> = arrayListOf()
+                jedis.hgetAll("chats").forEach { chats.add(Chat(it.value));println(it.value) }
                 jsonResponse(ctx, responseService.getNameExistChats(chats))
             }else{
                 jsonResponse(ctx, responseService.chatsNotExist())

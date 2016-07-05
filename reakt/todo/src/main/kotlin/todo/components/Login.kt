@@ -101,21 +101,6 @@ class Login : ComponentSpec<Unit, InputState>() {
         req.send()
     }
 
-    fun getCookie(cname:String): String {
-        var name = cname + "=";
-        var ca = document.cookie.split(';');
-        for(i in 0..ca.size - 1) {
-            var c = ca[i];
-            while (c[0]==' ') {
-                c = c.substring(1);
-            }
-            if (c.indexOf(name) == 0) {
-                return c.substring(name.length,c.length);
-            }
-        }
-        return "";
-    }
-
     private fun validInputs():Boolean {
         if(state.email.equals("") || state.pass.equals("")){
             state = InputState("", "", "Пожалуйста заполните поля")
@@ -124,6 +109,21 @@ class Login : ComponentSpec<Unit, InputState>() {
             return  true
         }
     }
+}
+
+fun getCookie(cname:String): String {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(i in 0..ca.size - 1) {
+        var c = ca[i];
+        while (c[0]==' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length,c.length);
+        }
+    }
+    return "";
 }
 
 fun createLogin() = Login.factory(Ref(null))
