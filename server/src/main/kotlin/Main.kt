@@ -13,14 +13,12 @@ import kotlin.reflect.KClass
 
 //пользователи онлайн
 var usersOnline: ArrayList<User> = arrayListOf()
-//созданые чаты
-var chats: ArrayList<Chat> = arrayListOf()
 
 object Vertx3KotlinRestJdbcTutorial2{
 
     val gson = Gson()
+
     var idUser = 0;
-    var idChat = 0;
 
     @JvmStatic fun main(args: Array<String>) {
 
@@ -69,6 +67,35 @@ object Vertx3KotlinRestJdbcTutorial2{
         }
 
         /**
+         * Запрос всех сообщений из конкретного чата
+         */
+        router.get("/getMessages/:nameChat").handler { ctx ->
+            val nameChat = ctx.request().getParam("nameChat");
+            println("nameChat = $nameChat")
+            val listMess: ArrayList<Message> = arrayListOf()
+            jedis.hgetAll(nameChat + "Messages").forEach {
+                val currentMess = gson.fromJson(it.value, Message::class.java)
+                listMess.add(currentMess)
+            }
+            ctx.response().end(gson.toJson(listMess))
+        }
+
+        /**
+         * Создание нвого сообщения в чате и добавление в БД
+         */
+        router.get("/newMessage/:message/:nameChat/:authorMessage").handler{ ctx ->
+            val message = ctx.request().getParam("message")
+            val nameChat = ctx.request().getParam("nameChat")
+            val authorMessage = ctx.request().getParam("authorMessage")
+            val timeCreateMessage = SimpleDateFormat("HH:mm:ss dd.MM.yyyy").format(System.currentTimeMillis())
+            val idMessage = jedis.hgetAll(nameChat + "Messages").size + 1;
+
+            val json = gson.toJson(Message(timeCreateMessage, authorMessage, message))
+            jedis.hset(nameChat + "Messages", "$idMessage", "$json")
+            jedis.save()
+        }
+
+        /**
          * Создание чата
          */
         router.get("/newChat/:nameChat/:authorChat").handler{ctx ->
@@ -95,7 +122,7 @@ object Vertx3KotlinRestJdbcTutorial2{
         router.get("/getExistChats").handler { ctx ->
             if(jedis.hgetAll("chats").size > 0){
                 val chats: ArrayList<Chat> = arrayListOf()
-                jedis.hgetAll("chats").forEach { chats.add(Chat(it.value));println(it.value) }
+                jedis.hgetAll("chats").forEach { chats.add(Chat(it.value));}
                 jsonResponse(ctx, responseService.getNameExistChats(chats))
             }else{
                 jsonResponse(ctx, responseService.chatsNotExist())
@@ -187,6 +214,7 @@ object Vertx3KotlinRestJdbcTutorial2{
             if (it.succeeded()) {
                 val res = if (it.result() == null) "" else gson.toJson(it.result())
                 ctx.response().end(res)
+
             } else {
                 ctx.response().setStatusCode(500).end(it.cause().toString())
             }

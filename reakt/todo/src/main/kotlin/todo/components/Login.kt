@@ -21,9 +21,8 @@ class Login : ComponentSpec<Unit, InputState>() {
     override fun Component.render() {
         div ({
             onKeyDown = {
-                if(it.keyCode == 13) {
-                    if(validInputs()) logIn(state.email, state.pass, null)}
-                }
+                if(it.keyCode == 13) { if(validInputs()) logIn(state.email, state.pass, null) }
+            }
         }){
             if(!getCookie("id").equals("")){
                 logIn(null, null, getCookie("id"))
@@ -53,7 +52,7 @@ class Login : ComponentSpec<Unit, InputState>() {
                         onClick = { if(validInputs()) registration()  }
                     }) { text("Регистрация") }
                     br { }
-                    span ({}){ text(state.message) }
+                    span ({className = "label label-danger"}){ text(state.message) }
                 }
             }
         }
@@ -102,12 +101,17 @@ class Login : ComponentSpec<Unit, InputState>() {
     }
 
     private fun validInputs():Boolean {
-        if(state.email.equals("") || state.pass.equals("")){
-            state = InputState("", "", "Пожалуйста заполните поля")
+        val regexMail = Regex("""[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$""")
+        val regexPass = Regex("""^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$""")
+        if(!regexMail.containsMatchIn(state.email)) {
+            state = InputState("", "", "Введите корректный Email")
             return false
-        }else{
-            return  true
         }
+        if(!regexPass.containsMatchIn(state.pass)) {
+            state = InputState("", "", "Пароль должен содержать 6 символов включая букву и цифру")
+            return false
+        }
+        return true;
     }
 }
 

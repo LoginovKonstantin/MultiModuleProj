@@ -17,10 +17,10 @@ html, body {
 }
 .welcome{
     float:left;
-    height:33px;
-    font-size:85%;
-    margin-right:5px;
-    margin-left: 15px;
+    margin: 0px 10px 0px 15px;
+}
+.btn-exit{
+    margin-top: 5px;
 }
 .btnEntranceChat{
     position: absolute;
@@ -34,22 +34,31 @@ html, body {
     margin-right: auto;
 }
 .left-n-right-side{
-    height:100%;
+    margin-top: 5px;
+    height: 100%;
 }
 .left-side{
-    margin-top: 10px;
-    height:90%;
+    height: 90%;
     width: 200px;
     float: left;
 }
 .list-group{
-    height:88%;
+    margin-bottom: 15px;
+    height: 88%;
     overflow: auto;
 }
 .right-side{
-    padding-top: 10px;
-    margin-left: 250px;
+    height: 100%;
+    margin-left: 230px;
 }
 .create-chat-input{
     margin-bottom: 5px;
+}
+.well{
+    margin-bottom: 5px;
+    height: 79%;
+    overflow: auto;
+}
+.chat{
+    height: 100%;
 }
