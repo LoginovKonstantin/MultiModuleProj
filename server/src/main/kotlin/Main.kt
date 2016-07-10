@@ -77,6 +77,7 @@ object Vertx3KotlinRestJdbcTutorial2{
                 val currentMess = gson.fromJson(it.value, Message::class.java)
                 listMess.add(currentMess)
             }
+            Collections.sort(listMess)
             ctx.response().end(gson.toJson(listMess))
         }
 
@@ -127,6 +128,17 @@ object Vertx3KotlinRestJdbcTutorial2{
             }else{
                 jsonResponse(ctx, responseService.chatsNotExist())
             }
+        }
+
+        /**
+         *Взять пользователя по Email
+         */
+        router.get("/getUser/:email").handler { ctx ->
+            val email = ctx.request().getParam("email")
+            val user = UserOnEmail(jedis.hget(email, "ip"),
+                    jedis.hget(email, "countInput"),
+                    jedis.hget(email, "date"))
+            ctx.response().end(gson.toJson(user))
         }
 
         /**

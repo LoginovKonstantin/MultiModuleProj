@@ -17,6 +17,7 @@ data class User(val email: String,
 }
 
 data class Chat(var nameChat: String)
+data class UserOnEmail(var ip: String, var countInput: String, var date: String)
 
 class ResponseService {
 

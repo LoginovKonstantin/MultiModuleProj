@@ -54,6 +54,9 @@ html, body {
 .create-chat-input{
     margin-bottom: 5px;
 }
+.glyphicon-time{
+    margin-right: 2px;
+}
 .well{
     margin-bottom: 5px;
     height: 79%;
@@ -61,4 +64,26 @@ html, body {
 }
 .chat{
     height: 100%;
+}
+.row{
+    height: 40px;
+}
+h3{
+    margin-top: 0px;
+}
+.btn-inalert{
+    height: 28px;
+    margin-bottom: 2px;
+    margin-right: -2px;
+    margin-top: -2px;
+    border-radius: 4px;
+}
+.left-header-room{
+    padding-right: 0px;
+    width:20%;
+}
+.my-alert{
+    margin-bottom: 0px;
+    padding: 2px;
+    height: 30px;
 }

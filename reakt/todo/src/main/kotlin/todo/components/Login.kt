@@ -52,7 +52,9 @@ class Login : ComponentSpec<Unit, InputState>() {
                         onClick = { if(validInputs()) registration()  }
                     }) { text("Регистрация") }
                     br { }
-                    span ({className = "label label-danger"}){ text(state.message) }
+                    var access = "danger";
+                    if(state.message.equals("Регистрация прошла успешно")) access = "primary"
+                    span ({className = "label label-$access"}){ text(state.message) }
                 }
             }
         }

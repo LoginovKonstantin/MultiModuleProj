@@ -6,6 +6,7 @@ import createLogin
 import org.w3c.xhr.XMLHttpRequest
 import java.util.*
 import kotlin.browser.document
+import kotlin.browser.window
 
 /**
  * Created by 4 on 11.06.2016.
@@ -42,15 +43,14 @@ class PersonalArea : ComponentSpec<UserProps, PersonalAreaState>() {
                 button ({
                     className = "btn-exit btn btn-danger"
                     onClick = {
+                        window.clearInterval(numberInterval)
                         exit(props);
                         react.render(createLogin(), document.getElementById("app")!!)
                     }
                 }){ text("Выйти") }
             }
-
             ListChats(state.listNameChat, props)
         }
-
     }
 
     private fun exit(props: UserProps) {
