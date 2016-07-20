@@ -6,6 +6,7 @@ import createLogin
 import org.w3c.xhr.XMLHttpRequest
 import java.util.*
 import kotlin.browser.document
+import kotlin.browser.window
 
 /**
  * Created by 4 on 11.06.2016.
@@ -32,23 +33,23 @@ class PersonalArea : ComponentSpec<UserProps, PersonalAreaState>() {
     }
 
     override fun Component.render() {
-        div {
-            div({className = "divHeader"}) {
-                h3 {
-                    span ({className = "welcome label label-success"}){
+        div ({className = "left-n-right-side"}){
+            div({}){
+                h2({className = "welcome"}) {
+                    span ({className = "label label-success"}){
                         text("Добро пожаловать, ${props.email}");
                     }
                 }
                 button ({
-                    className = "btn btn-danger"
+                    className = "btn-exit btn btn-danger"
                     onClick = {
+                        window.clearInterval(numberInterval)
                         exit(props);
                         react.render(createLogin(), document.getElementById("app")!!)
                     }
                 }){ text("Выйти") }
             }
-            listChats(state.listNameChat)
-
+            ListChats(state.listNameChat, props)
         }
     }
 
